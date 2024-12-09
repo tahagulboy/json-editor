@@ -49,10 +49,26 @@
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-primary" onclick="addToJSON()">JSON'a Ekle</button>
                 <button type="button" class="btn btn-secondary" onclick="clearForm()">Temizle</button>
+                <button type="button" class="btn btn-success mt-3" onclick="downloadJSON()">JSON'u İndir</button>
             </div>
         </form>
 
-        <h3 class="mt-4">Güncellenmiş JSON</h3>
+        <h3 class="mt-4">JSON Verisi</h3>
+        <table id="jsonTable" class="table table-bordered bg-light">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Soru</th>
+                    <th>Cevaplar</th>
+                    <th>Doğru Cevap</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Tablo içeriği JavaScript ile doldurulacak -->
+            </tbody>
+        </table>
+
         <pre id="output" class="bg-light p-3 rounded"></pre>
     </div>
 
@@ -70,6 +86,7 @@
                 reader.onload = function(e) {
                     try {
                         loadedJSON = JSON.parse(e.target.result);
+                        renderTable();
                         document.getElementById("output").textContent = JSON.stringify(loadedJSON, null, 2);
                         alert("JSON dosyası başarıyla yüklendi!");
                     } catch (error) {
@@ -79,6 +96,33 @@
                 reader.readAsText(file);
             }
         });
+
+        // Tabloyu güncelleme
+        function renderTable() {
+            const tableBody = document.getElementById("jsonTable").querySelector("tbody");
+            tableBody.innerHTML = ""; // Eski tabloyu temizle
+
+            if (!loadedJSON || !Array.isArray(loadedJSON.questions)) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center">Henüz veri yüklenmedi.</td></tr>`;
+                return;
+            }
+
+            loadedJSON.questions.forEach((question, index) => {
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${question.questionText}</td>
+                    <td>${question.answers.join("<br>")}</td>
+                    <td>${question.answers[question.correctAnswerIndex]}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${index})">Sil</button>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
 
         // JSON'a yeni soru ekleme
         function addToJSON() {
@@ -111,10 +155,25 @@
 
             // Soruyu JSON verisine ekleme
             loadedJSON.questions.push(newQuestion);
-
-            // Güncellenmiş JSON'u görüntüleme
+            renderTable(); // Tabloyu güncelle
             document.getElementById("output").textContent = JSON.stringify(loadedJSON, null, 2);
             alert("Soru başarıyla eklendi!");
+        }
+
+        // Soru silme
+        function deleteQuestion(index) {
+            if (!loadedJSON || !Array.isArray(loadedJSON.questions)) {
+                alert("Geçerli bir JSON verisi yok.");
+                return;
+            }
+
+            const confirmed = confirm("Bu soruyu silmek istediğinizden emin misiniz?");
+            if (confirmed) {
+                loadedJSON.questions.splice(index, 1);
+                renderTable(); // Tabloyu güncelle
+                document.getElementById("output").textContent = JSON.stringify(loadedJSON, null, 2);
+                alert("Soru başarıyla silindi!");
+            }
         }
 
         // Formu temizleme
@@ -126,6 +185,23 @@
             document.getElementById("answer4").value = "";
             document.getElementById("correctAnswerIndex").value = "";
             alert("Form temizlendi!");
+        }
+
+        function downloadJSON() {
+            if (!loadedJSON) {
+                alert("Henüz JSON dosyası yüklenmedi.");
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(loadedJSON, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "updated.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            alert("Güncellenmiş JSON indirildi!");
         }
     </script>
 </body>
