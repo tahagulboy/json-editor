@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Dosyasına Veri Ekleme</title>
+</head>
+<body>
+    <h1>JSON Dosyasına Veri Ekle</h1>
+    <form id="fileForm">
+        <label for="jsonFile">JSON Dosyası Yükle:</label><br>
+        <input type="file" id="jsonFile" accept=".json" required><br><br>
+
+        <h3>Yeni Soru Ekle</h3>
+        <label for="questionText">Soru:</label><br>
+        <textarea id="questionText" name="questionText" rows="3" required></textarea><br><br>
+        
+        <label for="answer1">Cevap 1:</label><br>
+        <input type="text" id="answer1" name="answers[]" required><br><br>
+        
+        <label for="answer2">Cevap 2:</label><br>
+        <input type="text" id="answer2" name="answers[]" required><br><br>
+        
+        <label for="answer3">Cevap 3:</label><br>
+        <input type="text" id="answer3" name="answers[]" required><br><br>
+        
+        <label for="answer4">Cevap 4:</label><br>
+        <input type="text" id="answer4" name="answers[]" required><br><br>
+        
+        <label for="correctAnswerIndex">Doğru Cevap (1-4):</label><br>
+        <input type="number" id="correctAnswerIndex" name="correctAnswerIndex" min="1" max="4" required><br><br>
+        
+        <button type="button" onclick="addToJSON()">JSON'a Ekle</button>
+    </form>
+
+    <h3>Güncellenmiş JSON</h3>
+    <pre id="output"></pre>
+
+    <script>
+        let loadedJSON = null;
+
+        // Dosya yüklenince JSON'u okuma
+        document.getElementById("jsonFile").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        loadedJSON = JSON.parse(e.target.result);
+                        document.getElementById("output").textContent = JSON.stringify(loadedJSON, null, 2);
+                        alert("JSON dosyası başarıyla yüklendi!");
+                    } catch (error) {
+                        alert("Geçerli bir JSON dosyası yükleyin.");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // JSON'a yeni soru ekleme
+        function addToJSON() {
+            if (!loadedJSON || !Array.isArray(loadedJSON.questions)) {
+                alert("Önce geçerli bir JSON dosyası yükleyin.");
+                return;
+            }
+
+            // Form verilerini toplama
+            const questionText = document.getElementById("questionText").value;
+            const answers = [
+                document.getElementById("answer1").value,
+                document.getElementById("answer2").value,
+                document.getElementById("answer3").value,
+                document.getElementById("answer4").value
+            ];
+            const correctAnswerIndex = parseInt(document.getElementById("correctAnswerIndex").value, 10) - 1;
+
+            if (correctAnswerIndex < 0 || correctAnswerIndex >= answers.length) {
+                alert("Doğru cevap geçerli bir aralıkta olmalıdır (1-4).");
+                return;
+            }
+
+            // Yeni soru nesnesi
+            const newQuestion = {
+                questionText,
+                answers,
+                correctAnswerIndex
+            };
+
+            // Soruyu JSON verisine ekleme
+            loadedJSON.questions.push(newQuestion);
+
+            // Güncellenmiş JSON'u görüntüleme
+            document.getElementById("output").textContent = JSON.stringify(loadedJSON, null, 2);
+            alert("Soru başarıyla eklendi!");
+        }
+    </script>
+</body>
+</html>
